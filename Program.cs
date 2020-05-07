@@ -1,5 +1,6 @@
 ﻿using Elastic.Apm;
 using ILoggerInterceptor.Implemention;
+using ILoggerInterceptor.Provider;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Threading;
@@ -12,9 +13,11 @@ namespace ILoggerInterceptor
         public static ILogger Logger { get; set; }
         static void Main(string[] args)
         {
-            var loggerFactory = LoggerFactory.Create(builder => builder.AddDebug());
+            var loggerFactory = LoggerFactory.Create(builder => builder
+                                                        .AddDebug()
+                                                        .AddApm(config => config.MinimumLogLevel = LogLevel.Information));
             Logger = loggerFactory.CreateLogger(nameof(ILoggerInterceptor));
-            Logger = new Interceptor(Logger);
+            //Logger = new Interceptor(Logger);
             Test2();
             Thread.Sleep(15000);
         }

@@ -18,7 +18,12 @@ namespace ILoggerInterceptor.Implemention
             LoggerScope = loggerScope;
         }
 
-        
+        public Scope()
+        {
+            LoggerScope = null;
+        }
+
+
 
         public void Dispose()
         {
@@ -34,7 +39,7 @@ namespace ILoggerInterceptor.Implemention
             if (disposing)
             {
                 handle.Dispose();
-                LoggerScope.Dispose();
+                LoggerScope?.Dispose();
                 if(Agent.Tracer.CurrentSpan == null)
                 {
                     Agent.Tracer.CurrentTransaction.End();
