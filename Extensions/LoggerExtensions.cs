@@ -18,7 +18,7 @@ namespace ILoggerInterceptor.Extensions
             _startTransaction = LoggerMessage.DefineScope<string, string>("transaction {TransactionName} with type {TransactionType} started");
             _startSpan = LoggerMessage.DefineScope<string, string>("span {SpanName} with type {SpanType} started");
             _captureException = LoggerMessage.Define(LogLevel.Error, new EventId(1, nameof(CaptureException)),"exception send to Apm");
-            _addMetaData = LoggerMessage.Define<string, string>(LogLevel.Information, new EventId(2, nameof(AddMetaData)), "key:{key}. value:{value}");
+            _addMetaData = LoggerMessage.Define<string, string>(LogLevel.Information, new EventId(2, nameof(AddMetaDataToCurrentTransaction)), "key:{key}. value:{value}");
         }
 
         public static IDisposable StartTransactionScope(this ILogger logger, string transactionName, string transactionType)
@@ -39,7 +39,14 @@ namespace ILoggerInterceptor.Extensions
 
             _captureException(logger, exception);
         }
-        public static void AddMetaData(this ILogger logger,string key,string value, Exception exception = null)
+        public static void AddMetaDataToCurrentTransaction(this ILogger logger,string key,string value, Exception exception = null)
+        {
+            Agent.Tracer.CurrentTransaction.Labels.Add(key, value);
+
+            _addMetaData(logger, key, value, exception);
+        }
+
+        public static void AddMetaDataToCurrentSpan(this ILogger logger, string key, string value, Exception exception = null)
         {
             GetCurrentSpan().Labels.Add(key, value);
 

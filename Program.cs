@@ -17,7 +17,7 @@ namespace ILoggerInterceptor
                                                         .AddApm(config => config.MinimumLogLevel = LogLevel.Information));
             Logger = loggerFactory.CreateLogger(nameof(ILoggerInterceptor));
             //Logger = new Interceptor(Logger);
-            Test3();
+            Test2();
             Thread.Sleep(15000);
         }
 
@@ -29,7 +29,7 @@ namespace ILoggerInterceptor
                 using (Logger.BeginScope("Test3","normal"))
                 {
                     Logger.LogInformation("Log 2");
-                    Logger.AddMetaData("key1","value1");
+                    Logger.AddMetaDataToCurrentTransaction("key1","value1");
                 }
             }
         }
@@ -40,12 +40,12 @@ namespace ILoggerInterceptor
             thread.Start();
             using (Logger.BeginScope("{apmTransactionName}", "TransactionTest2"))
             {
-                Logger.LogInformation("{custom}", 2);
+                Logger.LogInformation("{Apmcustom}", 2);
                 using (Logger.BeginScope("{apmSpanName}", "SpanTest2"))
                 {
-                    var spnaThread = new Thread(new ThreadStart(SpanTest));
-                    spnaThread.Start();
-                    Logger.LogInformation("{custom}", 4);
+                    var spanThread = new Thread(new ThreadStart(SpanTest));
+                    spanThread.Start();
+                    Logger.LogInformation("{Apmcustom}", 4);
                 }
             }
         }
@@ -66,7 +66,7 @@ namespace ILoggerInterceptor
         {
             using (Logger.BeginScope("{apmTransactionName}", "TransactionTest1"))
             {
-                Logger.LogInformation("{custom}",1);
+                Logger.LogInformation("{Apmcustom}",1);
                 Thread.Sleep(5000);
             }
         }
@@ -74,7 +74,7 @@ namespace ILoggerInterceptor
         {
             using (Logger.BeginScope("{apmSpanName}", "SpanTest1"))
             {
-                Logger.LogInformation("{custom}", 3);
+                Logger.LogInformation("{Apmcustom}", 3);
                 Thread.Sleep(5000);
             }
         }
