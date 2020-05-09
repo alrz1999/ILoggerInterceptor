@@ -6,19 +6,19 @@ using System;
 
 namespace ILoggerInterceptor.Extensions
 {
-    static class LoggerExtensions
+    public static class LoggerExtensions
     {
-        private static Func<ILogger, string, string, IDisposable> _startTransaction;
-        private static Func<ILogger, string, string, IDisposable> _startSpan;
-        private static Action<ILogger,Exception> _captureException;
-        private static Action<ILogger, string, string,Exception> _addMetaData;
+        private static readonly Func<ILogger, string, string, IDisposable> _startTransaction;
+        private static readonly Func<ILogger, string, string, IDisposable> _startSpan;
+        private static readonly Action<ILogger,Exception> _captureException;
+        private static readonly Action<ILogger, string, string, Exception> _addMetaData;
 
         static LoggerExtensions()
         {
-            _startTransaction = LoggerMessage.DefineScope<string, string>(null);
-            _startSpan = LoggerMessage.DefineScope<string, string>(null);
-            _captureException = LoggerMessage.Define(LogLevel.Error, new EventId(1, nameof(CaptureException)),null);
-            _addMetaData = LoggerMessage.Define<string,string>(LogLevel.Information, new EventId(2, nameof(AddMetaData)), null);
+            _startTransaction = LoggerMessage.DefineScope<string, string>("transaction {TransactionName} with type {TransactionType} started");
+            _startSpan = LoggerMessage.DefineScope<string, string>("span {SpanName} with type {SpanType} started");
+            _captureException = LoggerMessage.Define(LogLevel.Error, new EventId(1, nameof(CaptureException)),"exception send to Apm");
+            _addMetaData = LoggerMessage.Define<string, string>(LogLevel.Information, new EventId(2, nameof(AddMetaData)), "key:{key}. value:{value}");
         }
 
         public static IDisposable StartTransactionScope(this ILogger logger, string transactionName, string transactionType)
@@ -37,7 +37,7 @@ namespace ILoggerInterceptor.Extensions
         {
             GetCurrentSpan().CaptureException(exception);
 
-            _captureException(logger,exception);
+            _captureException(logger, exception);
         }
         public static void AddMetaData(this ILogger logger,string key,string value, Exception exception = null)
         {

@@ -1,5 +1,7 @@
-﻿using ILoggerInterceptor.Provider;
+﻿using ILoggerInterceptor.Extensions;
+using ILoggerInterceptor.Provider;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Threading;
 
 namespace ILoggerInterceptor
@@ -11,11 +13,25 @@ namespace ILoggerInterceptor
         {
             var loggerFactory = LoggerFactory.Create(builder => builder
                                                         .AddDebug()
+                                                        .AddConsole(conf=>conf.IncludeScopes =true)
                                                         .AddApm(config => config.MinimumLogLevel = LogLevel.Information));
             Logger = loggerFactory.CreateLogger(nameof(ILoggerInterceptor));
             //Logger = new Interceptor(Logger);
-            Test2();
+            Test3();
             Thread.Sleep(15000);
+        }
+
+        private static void Test3()
+        {
+            using (Logger.StartTransactionScope("Test3", "extension"))
+            {
+                Logger.LogInformation("Log 1");
+                using (Logger.BeginScope("Test3","normal"))
+                {
+                    Logger.LogInformation("Log 2");
+                    Logger.AddMetaData("key1","value1");
+                }
+            }
         }
 
         private static void Test2()

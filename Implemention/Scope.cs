@@ -23,8 +23,6 @@ namespace ILoggerInterceptor.Implemention
             LoggerScope = null;
         }
 
-
-
         public void Dispose()
         {
             Dispose(true);
