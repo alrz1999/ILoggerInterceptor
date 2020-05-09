@@ -9,14 +9,8 @@ namespace ILoggerInterceptor.Provider
 {
     class ApmLogger : ILogger
     {
-        private static readonly string DefaultTransactionType = ApiConstants.ActionExec;
-        private static readonly string DefaultTransactionName = "Not Defined";
-        private static readonly string DefaultSpanType = ApiConstants.ActionExec;
-        private static readonly string DefaultSpanName = "Not Defined";
-
         private readonly string categoryName;
         private ApmLoggerOptions ApmOptions { get; }
-
 
         public ApmLogger(string categoryName, ApmLoggerOptions apmConfigs)
         {
@@ -65,29 +59,26 @@ namespace ILoggerInterceptor.Provider
             }
         }
 
-        private void StartSpan<TState>(IExecutionSegment currentexecutionSegment, TState state)
+        private void StartSpan<TState>(IExecutionSegment currentExecutionSegment, TState state)
         {
             if (state is string)
             {
-                currentexecutionSegment.StartSpan(state.ToString(), DefaultSpanType);
+                    currentExecutionSegment.StartSpan(state.ToString(), ApmOptions.DefaultSpanType);
             }
             else if (state is IEnumerable<KeyValuePair<string, object>> Properties)
             {
                 var propDic = new Dictionary<string, object>();
                 foreach (var item in Properties)
                 {
-                    if (item.Key != "{OriginalFormat}" && !propDic.ContainsKey(item.Key))
+                    if (!propDic.ContainsKey(item.Key))
                         propDic.Add(item.Key, item.Value);
                 }
 
-                string apmSpanType = propDic.ContainsKey(nameof(apmSpanType)) ? propDic[nameof(apmSpanType)].ToString() : DefaultSpanType;
-                string apmSpanName = propDic.ContainsKey(nameof(apmSpanName)) ? propDic[nameof(apmSpanName)].ToString() : DefaultSpanName;
-                currentexecutionSegment.StartSpan(apmSpanName, apmSpanType);
+                string apmSpanType = propDic.ContainsKey(nameof(apmSpanType)) ? propDic[nameof(apmSpanType)].ToString() : ApmOptions.DefaultSpanType;
+                string apmSpanName = propDic.ContainsKey(nameof(apmSpanName)) ? propDic[nameof(apmSpanName)].ToString() : ApmOptions.DefaultSpanName;
+                var span = currentExecutionSegment.StartSpan(apmSpanName, apmSpanType);
 
-                foreach (var item in Properties)
-                {
-                    currentexecutionSegment.Labels.Add(item.Key, item.Value.ToString());
-                }
+                AddMetadata(span, propDic);
             }
         }
 
@@ -95,37 +86,41 @@ namespace ILoggerInterceptor.Provider
         {
             if (state is string)
             {
-                Agent.Tracer.StartTransaction(state.ToString(), DefaultTransactionType);
+                Agent.Tracer.StartTransaction(state.ToString(), ApmOptions.DefaultTransactionType);
             }
             else if (state is IEnumerable<KeyValuePair<string, object>> Properties)
             {
                 var propDic = new Dictionary<string, object>();
+
                 foreach (var item in Properties)
                 {
-                    if (item.Key != "{OriginalFormat}" && !propDic.ContainsKey(item.Key))
+                    if (!propDic.ContainsKey(item.Key))
                         propDic.Add(item.Key, item.Value);
                 }
-                string apmTransactionType = propDic.ContainsKey(nameof(apmTransactionType)) ? propDic[nameof(apmTransactionType)].ToString() : DefaultTransactionType;
-                string apmTransactionName = propDic.ContainsKey(nameof(apmTransactionName)) ? propDic[nameof(apmTransactionName)].ToString() : DefaultTransactionName;
-                Agent.Tracer.StartTransaction(apmTransactionName, apmTransactionType);
-                foreach (var item in Properties)
-                {
-                    if (item.Key != "{OriginalFormat}" && !propDic.ContainsKey(item.Key))
-                        Agent.Tracer.CurrentTransaction.Custom.Add(item.Key, item.Value.ToString());
-                }
+
+                string apmTransactionType = propDic.ContainsKey(nameof(apmTransactionType)) ? propDic[nameof(apmTransactionType)].ToString() : ApmOptions.DefaultTransactionType;
+                string apmTransactionName = propDic.ContainsKey(nameof(apmTransactionName)) ? propDic[nameof(apmTransactionName)].ToString() : ApmOptions.DefaultTransactionName;
+                var transaction = Agent.Tracer.StartTransaction(apmTransactionName, apmTransactionType);
+
+                AddMetadata(transaction, propDic);
             }
         }
 
-        private static void AddMetadata<TState>(IExecutionSegment executionSegment, TState state)
+        private void AddMetadata<TState>(IExecutionSegment executionSegment, TState state)
         {
             if (state is IEnumerable<KeyValuePair<string, object>> Properties)
             {
                 foreach (var item in Properties)
                 {
-                    if (item.Key != "{OriginalFormat}")
+                    if (IsForApm(item.Key) && item.Key != "{OriginalFormat}")
                         executionSegment.Labels.Add(item.Key, item.Value.ToString());
                 }
             }
+        }
+
+        private bool IsForApm(string key)
+        {
+            return key.StartsWith(ApmOptions.ApmMetaDataSign);
         }
     }
 }

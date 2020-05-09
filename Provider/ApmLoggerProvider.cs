@@ -7,12 +7,18 @@ namespace ILoggerInterceptor.Provider
     public class ApmLoggerProvider : ILoggerProvider
     {
         internal ApmLoggerOptions ApmConfigs;
+
         public bool IsDisposed { get; private set; }
 
         internal ApmLoggerProvider(Action<ApmLoggerOptions> configure = null)
         {
             ApmConfigs = ApmLoggerOptions.CreateDefaultApmLoggerOptions();
             configure?.Invoke(ApmConfigs);
+        }
+
+        internal ApmLoggerProvider(ApmLoggerOptions configuration)
+        {
+            ApmConfigs = configuration;
         }
 
         public ILogger CreateLogger(string categoryName)

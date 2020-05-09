@@ -1,10 +1,6 @@
-﻿using Elastic.Apm;
-using ILoggerInterceptor.Implemention;
-using ILoggerInterceptor.Provider;
+﻿using ILoggerInterceptor.Provider;
 using Microsoft.Extensions.Logging;
-using System;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace ILoggerInterceptor
 {

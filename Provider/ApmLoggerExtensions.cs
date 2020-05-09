@@ -14,5 +14,10 @@ namespace ILoggerInterceptor.Provider
         {
             return builder.AddProvider(new ApmLoggerProvider(configure));
         }
+
+        public static ILoggingBuilder AddApm(this ILoggingBuilder builder, ApmLoggerOptions configuration)
+        {
+            return builder.AddProvider(new ApmLoggerProvider(configuration));
+        }
     }
 }
